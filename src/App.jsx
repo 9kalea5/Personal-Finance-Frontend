@@ -5,6 +5,7 @@ import { ToastContainer } from 'react-toastify';
 import { theme } from './theme';
 import Register from './components/Register';
 import Login from './components/Login';
+import ForgotPassword from './components/ForgotPassword';
 import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
@@ -14,6 +15,7 @@ function App() {
         <Routes>
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/" element={<Navigate to="/login" />} />
         </Routes>
         <ToastContainer
