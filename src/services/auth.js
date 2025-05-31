@@ -28,3 +28,12 @@ export const logout = () => {
   localStorage.removeItem('token');
   delete axios.defaults.headers.common['Authorization'];
 };
+
+export const requestPasswordReset = async (email) => {
+  try {
+    const response = await axios.post(`${API_URL}/password-reset/`, { email });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { detail: 'Password reset request failed' };
+  }
+};
