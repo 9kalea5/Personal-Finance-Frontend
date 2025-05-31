@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import {
   Box,
   Button,
   Card,
+  CircularProgress,
   Container,
   IconButton,
   InputAdornment,
@@ -21,6 +22,7 @@ import {
   Lock,
 } from '@mui/icons-material';
 import { toast } from 'react-toastify';
+import { login } from '../services/auth';
 
 const validationSchema = yup.object({
   email: yup.string()
@@ -31,7 +33,9 @@ const validationSchema = yup.object({
 });
 
 export default function Login() {
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const formik = useFormik({
     initialValues: {
@@ -40,13 +44,16 @@ export default function Login() {
     },
     validationSchema: validationSchema,
     onSubmit: async (values) => {
+      setIsSubmitting(true);
       try {
-        // TODO: Implement login API call
-        console.log('Form submitted:', values);
+        await login(values);
         toast.success('Login successful!');
-        // Redirect to dashboard after successful login
+        navigate('/dashboard'); // You'll need to create a dashboard route
       } catch (error) {
-        toast.error('Login failed. Please check your credentials.');
+        const errorMessage = error.detail || 'Invalid email or password';
+        toast.error(errorMessage);
+      } finally {
+        setIsSubmitting(false);
       }
     },
   });
@@ -140,9 +147,24 @@ export default function Login() {
                 fullWidth
                 variant="contained"
                 size="large"
-                sx={{ mt: 2 }}
+                disabled={isSubmitting}
+                sx={{ mt: 2, position: 'relative' }}
               >
-                Sign In
+                {isSubmitting ? (
+                  <>
+                    <CircularProgress
+                      size={24}
+                      sx={{
+                        position: 'absolute',
+                        left: '50%',
+                        marginLeft: '-12px',
+                      }}
+                    />
+                    Signing In...
+                  </>
+                ) : (
+                  'Sign In'
+                )}
               </Button>
 
               <Typography variant="body2" align="center" sx={{ mt: 2 }}>

@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import {
   Box,
   Button,
   Card,
+  CircularProgress,
   Container,
   IconButton,
   InputAdornment,
@@ -23,14 +24,16 @@ import {
   Lock,
 } from '@mui/icons-material';
 import { toast } from 'react-toastify';
+import { register } from '../services/auth';
+
+const phoneRegExp = /^[0-9]{10,15}$/;
 
 const validationSchema = yup.object({
   firstName: yup.string().required('First name is required'),
   lastName: yup.string().required('Last name is required'),
   email: yup.string().email('Enter a valid email').required('Email is required'),
   phoneNumber: yup.string()
-    .matches(/^[0-9]+$/, 'Must be only digits')
-    .min(10, 'Must be at least 10 digits')
+    .matches(phoneRegExp, 'Please enter a valid phone number')
     .required('Phone number is required'),
   password: yup.string()
     .min(8, 'Password must be at least 8 characters')
@@ -41,8 +44,10 @@ const validationSchema = yup.object({
 });
 
 export default function Register() {
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const formik = useFormik({
     initialValues: {
@@ -55,13 +60,23 @@ export default function Register() {
     },
     validationSchema: validationSchema,
     onSubmit: async (values) => {
+      setIsSubmitting(true);
       try {
-        // TODO: Implement registration API call
-        console.log('Form submitted:', values);
-        toast.success('Registration successful! Please check your email to verify your account.');
-        // Redirect to login page after successful registration
+        const userData = {
+          email: values.email,
+          phone: values.phoneNumber,
+          first_name: values.firstName,
+          last_name: values.lastName,
+          password: values.password
+        };
+        await register(userData);
+        toast.success('Registration successful! Please log in.');
+        navigate('/login');
       } catch (error) {
-        toast.error('Registration failed. Please try again.');
+        const errorMessage = error.detail || Object.values(error)[0]?.[0] || 'Registration failed';
+        toast.error(errorMessage);
+      } finally {
+        setIsSubmitting(false);
       }
     },
   });
@@ -229,9 +244,24 @@ export default function Register() {
                 fullWidth
                 variant="contained"
                 size="large"
-                sx={{ mt: 2 }}
+                disabled={isSubmitting}
+                sx={{ mt: 2, position: 'relative' }}
               >
-                Create Account
+                {isSubmitting ? (
+                  <>
+                    <CircularProgress
+                      size={24}
+                      sx={{
+                        position: 'absolute',
+                        left: '50%',
+                        marginLeft: '-12px',
+                      }}
+                    />
+                    Creating Account...
+                  </>
+                ) : (
+                  'Create Account'
+                )}
               </Button>
 
               <Typography variant="body2" align="center" sx={{ mt: 2 }}>
